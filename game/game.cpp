@@ -19,13 +19,18 @@ void enemymove();
 void enemyshot();
 void check();
 void enemymoveRL();
+void enemybossmove();
 int chk_1[6] = { 0 };
 int chk_2[6] = { 0 };
-int chk_3[6] = { 0 };
-int chk_4[6] = { 0 };
+int chk_3[6] = { 0 };  //enemy
+int chk_4[6] = { 0 };  //enemyBullet
+int chk_5 = 0;         //enemyboss
 int enemyCount = 0;
 bool enemymove1 = true;
 bool enemymove2[6] = {};
+bool right = true;
+bool left = false;
+bool bossmove = false;
 
 int startgame = 0;
 clock_t start = -0.5, end = 0;
@@ -34,6 +39,7 @@ clock_t start1 = -0.5, end1 = 0;
 Texture monsterTexture;
 Texture BULLET;
 Texture enemyTexture;
+Texture enemybossTexture;
 
 class Player
 	{
@@ -55,7 +61,6 @@ class Monster
 public:
 	Sprite monster;
 	int hit = 0;
-
 	void set(int x, int y)
 	{
 		monsterTexture.loadFromFile("img/rock.png");
@@ -81,13 +86,27 @@ class Enemy
 {
 public:
 	Sprite enemy;
-	//int hit = 0;
+	int enemyhp = 2;
 	void set(int x, int y)
 	{
 		enemyTexture.loadFromFile("img/space_enemy.png");
 		enemy.setTexture(enemyTexture);
 		enemy.setTextureRect(sf::IntRect(0, 0, 70, 70));
 		enemy.setPosition(x, y);
+	}
+};
+
+class EnemyBoss
+{
+public:
+	Sprite enemyboss;
+	//int hit = 0;
+	void set(int x, int y)
+	{
+		enemybossTexture.loadFromFile("img/enemyboss.png");
+		enemyboss.setTexture(enemybossTexture);
+		enemyboss.setTextureRect(sf::IntRect(0, 0, 180, 180));
+		enemyboss.setPosition(x, y);
 	}
 };
 
@@ -107,6 +126,7 @@ Enemy enemy[6];
 Bullet bullet[6];
 Monster monster[6];
 enemyBullet enemybullet[6];
+EnemyBoss enemyboss;
 
 int main()
 {
@@ -208,6 +228,7 @@ strgame:
 			enemyshot();
 			check();
 			enemymoveRL();
+			enemybossmove();
 			Event event;
 			while (window.pollEvent(event))
 			{
@@ -252,13 +273,13 @@ strgame:
 					break;
 				}
 			}*/
+
 			//enemy
-			
 			for (int i = 0; i < 6; i++) {
 				if (chk_3[i] == 0) {
 					enemy[i].set(((115 * i) + 160), -90);
 					chk_3[i] = 1;
-					//break;
+					break;
 				}
 			}
 			
@@ -273,6 +294,13 @@ strgame:
 					}
 					start1 = clock();
 				}dif3 = 0;
+			}
+
+			//enemyboss
+			if (chk_5 == 0) {
+				enemyboss.set(400, -200);
+				chk_5 = 1;
+				//break;
 			}
 
 			//collision bullet&enemybullet
@@ -293,26 +321,25 @@ strgame:
 						
 						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
 						chk_4[k] = 0;
-						HP--;
+						//HP--;
 					}
 				}
 			
 
 			//collision bullet&enemy
-			for (int i = 0; i < 6; i++) {
-				for (int k = 0; k < 6; k++) {
-					if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
-						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
-						enemy[k].enemy.setPosition(sf::Vector2f(-80, 150));
-						scoreCount++;
-						chk_3[k] = 0;
-						chk_4[k] = 0;
-						enemyCount++;
+				for (int i = 0; i < 6; i++) {
+					for (int k = 0; k < 6; k++) {
+						if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
+							bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
+							enemy[k].enemy.setPosition(sf::Vector2f(-80, 150));
+							scoreCount++;
+							enemymove2[k] == false;
+							chk_3[k] = 0;
+							chk_4[k] = 0;
+							enemyCount++;
+						}
 					}
-					
-					//printf("%d", enemyCount);
 				}
-			}
 			
 			//collision player&monster
 			for (int i = 0; i < 6; i++) {
@@ -342,7 +369,6 @@ strgame:
 				player.shape.setPosition(player.shape.getPosition().x, 0.f);
 			if (player.shape.getPosition().y >= window.getSize().y - player.shape.getGlobalBounds().height) //Bottom
 				player.shape.setPosition(player.shape.getPosition().x, window.getSize().y - player.shape.getGlobalBounds().height);
-
 
 			
 			//BG move
@@ -381,6 +407,11 @@ strgame:
 				if (chk_3[i] == 1) {
 					window.draw(enemy[i].enemy);
 				}
+			}
+
+			//enemyboss
+			if (chk_5 == 1) {
+				window.draw(enemyboss.enemyboss);
 			}
 
 			//enemybullet
@@ -424,8 +455,6 @@ strgame:
 						//printf("play");
 						window.close();
 						goto strgame;
-						
-
 						break;
 					case 1:
 						printf("leaderboard");
@@ -483,8 +512,17 @@ void enemymove()
 		}
 		if (enemy[5].enemy.getPosition().y == 80 ) {
 			enemymove1 = false;
+		}
+		if (enemy[i].enemy.getPosition().y == 80) {
 			enemymove2[i] = true;
 		}
+	}
+}
+
+void enemybossmove()
+{
+	if (bossmove == true && enemyboss.enemyboss.getPosition().y < 30 && chk_5 == 1) {
+		enemyboss.enemyboss.move(0, 2.5);
 	}
 }
 
@@ -503,9 +541,10 @@ void enemyshot()
 
 void check()
 {
-	if (enemyCount >= 6) {
-		enemymove1 = true;
-		enemyCount = 0;
+	if (enemyCount == 6) {
+		//enemymove1 = true;
+		//enemyCount = 0;
+		bossmove = true;
 	}
 }
 
@@ -513,8 +552,24 @@ void enemymoveRL()
 {
 	for (int i = 0; i < 6; i++) {
 		if (enemymove2[i] == true) {
-			if (enemy[i].enemy.getPosition().x <((115*i)+250)) {
-				enemy[i].enemy.move(1, 0);
+			if (right == true) {
+				if (enemy[i].enemy.getPosition().x < ((115 * i) + 250)) {
+					enemy[i].enemy.move(1, 0);
+
+				}
+				if (enemy[i].enemy.getPosition().x == ((115 * i) + 250)) {
+					right = false;
+					left = true;
+				}
+			}
+			if (left == true) {
+				if (enemy[i].enemy.getPosition().x > ((115 * i) + 100)) {
+					enemy[i].enemy.move(-1, 0);
+				}
+				if (enemy[i].enemy.getPosition().x == ((115 * i) + 100)) {
+					left = false;
+					right = true;
+				}
 			}
 		}
 	}
