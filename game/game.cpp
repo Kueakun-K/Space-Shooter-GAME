@@ -17,10 +17,15 @@ void shot();
 void erase();
 void enemymove();
 void enemyshot();
+void check();
+void enemymoveRL();
 int chk_1[6] = { 0 };
 int chk_2[6] = { 0 };
-int chk_3[8] = { 0 };
-int chk_4[8] = { 0 };
+int chk_3[6] = { 0 };
+int chk_4[6] = { 0 };
+int enemyCount = 0;
+bool enemymove1 = true;
+bool enemymove2[6] = {};
 
 int startgame = 0;
 clock_t start = -0.5, end = 0;
@@ -98,14 +103,14 @@ public:
 	}
 };
 
-Enemy enemy[8];
+Enemy enemy[6];
 Bullet bullet[6];
 Monster monster[6];
-enemyBullet enemybullet[8];
+enemyBullet enemybullet[6];
 
 int main()
 {
-	RenderWindow window(sf::VideoMode(1440, 800), "MENU MODE", sf::Style::Close | sf::Style::Resize);
+	RenderWindow window(sf::VideoMode(1000, 800), "MENU MODE", sf::Style::Close | sf::Style::Resize);
 	Menu menu(window.getSize().x, window.getSize().y);
 
 	Texture texture;
@@ -118,7 +123,7 @@ strgame:
 	if (startgame == 1) {
 	srand(time(NULL));
 
-	RenderWindow window(sf::VideoMode(1440, 800), "Game");
+	RenderWindow window(sf::VideoMode(1000, 800), "Game");
 	window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(true);
 	Menu menu(window.getSize().x, window.getSize().y);
@@ -193,6 +198,7 @@ strgame:
 
 		//Player init
 		Player player(&playerTex);
+		
 
 		while (window.isOpen())
 		{
@@ -200,6 +206,8 @@ strgame:
 			erase();
 			enemymove();
 			enemyshot();
+			check();
+			enemymoveRL();
 			Event event;
 			while (window.pollEvent(event))
 			{
@@ -210,7 +218,7 @@ strgame:
 			float x, y;
 			x = player.shape.getPosition().x;
 			y = player.shape.getPosition().y;
-			int enemyCount = 0;
+			
 
 			float dif1 = (float)(end - start) / CLOCKS_PER_SEC;
 
@@ -244,38 +252,32 @@ strgame:
 					break;
 				}
 			}*/
-
-
 			//enemy
 			
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 6; i++) {
 				if (chk_3[i] == 0) {
-					enemy[i].set(((150 * i) + 150), -70);
+					enemy[i].set(((115 * i) + 160), -90);
 					chk_3[i] = 1;
 					//break;
 				}
 			}
 			
-			
-
 			end1 = clock();
 			float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
 			//enemyBullet 
 			if (dif3 > 3) {
-				for (int i = 0; i < 8; i++) {
-					if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y >= 100) {
+				for (int i = 0; i < 6; i++) {
+					if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y == 80) {
 						enemybullet[i].set(enemy[i].enemy.getPosition().x + 23, enemy[i].enemy.getPosition().y + 58);
 						chk_4[i] = 1;
-
 					}
 					start1 = clock();
 				}dif3 = 0;
 			}
 
-
 			//collision bullet&enemybullet
 			for (int i = 0; i < 6; i++) {
-				for (int k = 0; k < 8; k++) {
+				for (int k = 0; k < 6; k++) {
 					if (bullet[i].bullet.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
 						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
@@ -286,7 +288,7 @@ strgame:
 
 			//collision player&enemybullet
 			
-				for (int k = 0; k < 8; k++) {
+				for (int k = 0; k < 6; k++) {
 					if (player.shape.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
 						
 						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
@@ -298,18 +300,20 @@ strgame:
 
 			//collision bullet&enemy
 			for (int i = 0; i < 6; i++) {
-				for (int k = 0; k < 8; k++) {
+				for (int k = 0; k < 6; k++) {
 					if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
 						enemy[k].enemy.setPosition(sf::Vector2f(-80, 150));
 						scoreCount++;
 						chk_3[k] = 0;
 						chk_4[k] = 0;
-						//enemyCount++;
+						enemyCount++;
 					}
+					
+					//printf("%d", enemyCount);
 				}
 			}
-
+			
 			//collision player&monster
 			for (int i = 0; i < 6; i++) {
 				if (monster[i].monster.getGlobalBounds().intersects(player.shape.getGlobalBounds())) {
@@ -339,6 +343,8 @@ strgame:
 			if (player.shape.getPosition().y >= window.getSize().y - player.shape.getGlobalBounds().height) //Bottom
 				player.shape.setPosition(player.shape.getPosition().x, window.getSize().y - player.shape.getGlobalBounds().height);
 
+
+			
 			//BG move
 			parallaxShader.setUniform("offset", offset -= clock1.restart().asSeconds() / 50);
 
@@ -371,14 +377,14 @@ strgame:
 			}*/
 
 			//enemy
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 6; i++) {
 				if (chk_3[i] == 1) {
 					window.draw(enemy[i].enemy);
 				}
 			}
 
 			//enemybullet
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 6; i++) {
 				if (chk_4[i] == 1) {
 					window.draw(enemybullet[i].enemybullet);
 				}
@@ -415,7 +421,7 @@ strgame:
 					{
 					case 0:
 						startgame = 1;
-						printf("play");
+						//printf("play");
 						window.close();
 						goto strgame;
 						
@@ -445,16 +451,13 @@ strgame:
 	return 0;
 }
 
-
-
-
 void shot()
 {
 	for (int i = 0; i < 6; i++) {
 		if (chk_1[i] == 1) {
 			bullet[i].bullet.move(0, -5);
 		}
-		if (bullet[i].bullet.getPosition().y <0) {
+		if (bullet[i].bullet.getPosition().y <10) {
 			chk_1[i] = 0;
 		}
 	}
@@ -470,27 +473,49 @@ void erase()
 			chk_2[i] = 0;
 		}
 	}
-	
 }
 
 void enemymove()
 {
-	for (int i = 0; i < 8; i++) {
-		if (enemy[i].enemy.getPosition().y < 100 && chk_3[i] == 1) {
+	for (int i = 0; i < 6; i++) {
+		if (enemy[i].enemy.getPosition().y < 80 && chk_3[i] == 1 && enemymove1 == true) {
 			enemy[i].enemy.move(0, 2.5);
+		}
+		if (enemy[5].enemy.getPosition().y == 80 ) {
+			enemymove1 = false;
+			enemymove2[i] = true;
 		}
 	}
 }
 
 void enemyshot()
 {
-	for (int i = 0; i < 8; i++) {
-		if (chk_4[i] == 1 && enemy[i].enemy.getPosition().y == 100) {
+	for (int i = 0; i < 6; i++) {
+		if (chk_4[i] == 1 && enemy[i].enemy.getPosition().y == 80) {
 			enemybullet[i].enemybullet.move(0, 5);
 		}
 		if (enemybullet[i].enemybullet.getPosition().y > 800) {
 			chk_4[i] = 0;
 
+		}
+	}
+}
+
+void check()
+{
+	if (enemyCount >= 6) {
+		enemymove1 = true;
+		enemyCount = 0;
+	}
+}
+
+void enemymoveRL()
+{
+	for (int i = 0; i < 6; i++) {
+		if (enemymove2[i] == true) {
+			if (enemy[i].enemy.getPosition().x <((115*i)+250)) {
+				enemy[i].enemy.move(1, 0);
+			}
 		}
 	}
 }
