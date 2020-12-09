@@ -14,20 +14,24 @@
 using namespace sf;
 
 void shot();
-void erase();
-void enemymove();
-void enemyshot();
+void enemymovewave1();
+void enemymovewave2();
+void enemymovewave3();
+void enemyshotwave12();
+void enemyshotwave345();
 void check();
 void enemymoveRL();
 void enemybossmove();
-int chk_1[6] = { 0 };
-int chk_2[6] = { 0 };
-int chk_3[6] = { 0 };  //enemy
-int chk_4[6] = { 0 };  //enemyBullet
-int chk_5 = 0;         //enemyboss
+void enemybossshot();
+int chk_1[6] = { 0 };  //bullet
+int chk_3[19] ={ 0 };  //enemy
+int chk_4[19] ={ 0 };  //enemyBullet
+int chk_5[6] = { 0 };  //enemyboss
+int chk_6[18] ={ 0 };  //enemybossBullet
 int enemyCount = 0;
+int wave = 3;
 bool enemymove1 = true;
-bool enemymove2[6] = {};
+bool enemymove2[19] = {};
 bool right = true;
 bool left = false;
 bool bossmove = false;
@@ -35,8 +39,8 @@ bool bossmove = false;
 int startgame = 0;
 clock_t start = -0.5, end = 0;
 clock_t start1 = -0.5, end1 = 0;
+clock_t start2 = -0.5, end2 = 0;
 
-Texture monsterTexture;
 Texture BULLET;
 Texture enemyTexture;
 Texture enemybossTexture;
@@ -56,19 +60,6 @@ public:
 		~Player() {}
 	};
 
-class Monster
-{
-public:
-	Sprite monster;
-	int hit = 0;
-	void set(int x, int y)
-	{
-		monsterTexture.loadFromFile("img/rock.png");
-		monster.setTexture(monsterTexture);
-		monster.setTextureRect(sf::IntRect(0, 0, 50, 50));
-		monster.setPosition(x, y);
-	}
-};
 
 class Bullet {
 public:
@@ -105,7 +96,7 @@ public:
 	{
 		enemybossTexture.loadFromFile("img/enemyboss.png");
 		enemyboss.setTexture(enemybossTexture);
-		enemyboss.setTextureRect(sf::IntRect(0, 0, 180, 180));
+		enemyboss.setTextureRect(sf::IntRect(0, 0, 130, 130));
 		enemyboss.setPosition(x, y);
 	}
 };
@@ -122,11 +113,23 @@ public:
 	}
 };
 
-Enemy enemy[6];
+class enemybossBullet {
+public:
+	sf::Sprite enemybossbullet;
+	void set(int x, int y)
+	{
+		//BULLET.loadFromFile("img/bullet.png");
+		enemybossbullet.setTexture(BULLET);
+		enemybossbullet.setTextureRect(sf::IntRect(0, 0, 20, 20));
+		enemybossbullet.setPosition(x, y);
+	}
+};
+
+Enemy enemy[19];
 Bullet bullet[6];
-Monster monster[6];
-enemyBullet enemybullet[6];
-EnemyBoss enemyboss;
+enemyBullet enemybullet[19];
+EnemyBoss enemyboss[6];
+enemybossBullet enemybossbullet[18];
 
 int main()
 {
@@ -168,6 +171,18 @@ strgame:
 		scoreText.setPosition(10, 0);
 		scoreText.setFont(font);
 		scoreText.setFillColor(Color::White);
+
+		//wave
+		Text waveText;
+		waveText.setPosition(70, 0);
+		waveText.setFont(font);
+		waveText.setFillColor(Color::White);
+
+		//testposition
+		Text position;
+		position.setPosition(150, 0);
+		position.setFont(font);
+		position.setFillColor(Color::White);
 
 		if (!BackgroundTexture.loadFromFile("img/spacee.png"))
 		{
@@ -223,12 +238,7 @@ strgame:
 		while (window.isOpen())
 		{
 			shot();
-			erase();
-			enemymove();
-			enemyshot();
 			check();
-			enemymoveRL();
-			enemybossmove();
 			Event event;
 			while (window.pollEvent(event))
 			{
@@ -236,11 +246,12 @@ strgame:
 				if (event.type == Event::Closed)
 					window.close();
 			}
-			float x, y;
+			float x, y,z;
 			x = player.shape.getPosition().x;
 			y = player.shape.getPosition().y;
+			z = enemyboss[0].enemyboss.getPosition().y;
 			
-
+			end = clock();
 			float dif1 = (float)(end - start) / CLOCKS_PER_SEC;
 
 			//player control
@@ -260,52 +271,12 @@ strgame:
 						start = clock();
 						break;
 					}
+				}
 
-				}
-			end = clock();
-			float dif2 = (float)(end - start) / CLOCKS_PER_SEC;
-			//monster 
-			/*for (int i = 0; i < 6; i++) {
-				if (chk_2[i] == 0 && dif2 > 1) {
-					monster[i].set(rand() % 600, -30);
-					chk_2[i] = 1;
-					start = clock();
-					break;
-				}
-			}*/
-
-			//enemy
-			for (int i = 0; i < 6; i++) {
-				if (chk_3[i] == 0) {
-					enemy[i].set(((115 * i) + 160), -90);
-					chk_3[i] = 1;
-					break;
-				}
-			}
 			
-			end1 = clock();
-			float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
-			//enemyBullet 
-			if (dif3 > 3) {
-				for (int i = 0; i < 6; i++) {
-					if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y == 80) {
-						enemybullet[i].set(enemy[i].enemy.getPosition().x + 23, enemy[i].enemy.getPosition().y + 58);
-						chk_4[i] = 1;
-					}
-					start1 = clock();
-				}dif3 = 0;
-			}
-
-			//enemyboss
-			if (chk_5 == 0) {
-				enemyboss.set(400, -200);
-				chk_5 = 1;
-				//break;
-			}
-
 			//collision bullet&enemybullet
 			for (int i = 0; i < 6; i++) {
-				for (int k = 0; k < 6; k++) {
+				for (int k = 0; k < 19; k++) {
 					if (bullet[i].bullet.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
 						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
@@ -315,48 +286,39 @@ strgame:
 			}
 
 			//collision player&enemybullet
-			
-				for (int k = 0; k < 6; k++) {
-					if (player.shape.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
-						
-						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
-						chk_4[k] = 0;
-						//HP--;
-					}
-				}
-			
-
-			//collision bullet&enemy
-				for (int i = 0; i < 6; i++) {
-					for (int k = 0; k < 6; k++) {
-						if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
-							bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
-							enemy[k].enemy.setPosition(sf::Vector2f(-80, 150));
-							scoreCount++;
-							enemymove2[k] == false;
-							chk_3[k] = 0;
-							chk_4[k] = 0;
-							enemyCount++;
-						}
-					}
-				}
-			
-			//collision player&monster
-			for (int i = 0; i < 6; i++) {
-				if (monster[i].monster.getGlobalBounds().intersects(player.shape.getGlobalBounds())) {
-					monster[i].monster.setPosition(sf::Vector2f(-100, 200));
-					HP--;
+			for (int k = 0; k < 19; k++) {
+				if (player.shape.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
+					enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
+					chk_4[k] = 0;
+					//HP--;
 				}
 			}
 
-			//collision bullet&monster
+
+			//collision bullet&enemy
 			for (int i = 0; i < 6; i++) {
-				for (int k = 0; k < 6; k++) {
-					if (monster[k].monster.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
-						monster[k].monster.setPosition(sf::Vector2f(rand() % 600, -100));
+				for (int k = 0; k < 19; k++) {
+					if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
+						enemy[k].enemy.setPosition(sf::Vector2f(-800, 150));
 						scoreCount++;
+						enemymove2[k] == false;
+						//chk_3[k] = 0;
+						chk_4[k] = 0;
+						enemyCount++;
 					}
+				}
+			}
+
+			//collision player&enemy
+			for (int k = 0; k < 19; k++) {
+				if (player.shape.getGlobalBounds().intersects(enemy[k].enemy.getGlobalBounds())) {
+					enemy[k].enemy.setPosition(sf::Vector2f(-800, 150));
+					//chk_3[k] = 0;
+					chk_4[k] = 0;
+					scoreCount++;
+					enemyCount++;
+					//HP--;
 				}
 			}
 
@@ -370,6 +332,126 @@ strgame:
 			if (player.shape.getPosition().y >= window.getSize().y - player.shape.getGlobalBounds().height) //Bottom
 				player.shape.setPosition(player.shape.getPosition().x, window.getSize().y - player.shape.getGlobalBounds().height);
 
+
+			if (wave == 1) {
+				enemymovewave1();
+				enemyshotwave12();
+				//enemy
+				for (int i = 0; i < 5; i++) {
+					if (chk_3[i] == 0) {
+						enemy[i].set(((140 * i) + 170), -90);
+						chk_3[i] = 1;
+						break;
+					}
+				}
+
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				//enemyBullet 
+				if (dif3 > 3) {
+					for (int i = 0; i < 5; i++) {
+						if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y == 80) {
+							enemybullet[i].set(enemy[i].enemy.getPosition().x + 23, enemy[i].enemy.getPosition().y + 58);
+							chk_4[i] = 1;
+						}
+						start1 = clock();
+					}dif3 = 0;
+				}
+			}
+
+			if (wave == 2) {
+				enemymovewave2();
+				enemyshotwave12();
+				enemymoveRL();
+				//enemy
+				for (int i = 5; i < 10; i++) {
+					if (chk_3[i] == 0) {
+						enemy[i].set(((140 * (i%5)) + 170), -90);
+						chk_3[i] = 1;
+						break;
+					}
+				}
+
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				//enemyBullet 
+				if (dif3 > 3) {
+					for (int i = 5; i < 10; i++) {
+						if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y == 80) {
+							enemybullet[i].set(enemy[i].enemy.getPosition().x + 23, enemy[i].enemy.getPosition().y + 58);
+							chk_4[i] = 1;
+						}
+						start1 = clock();
+					}dif3 = 0;
+				}
+			}
+
+			if (wave == 3) {
+				enemymovewave3();
+				enemyshotwave345();
+				enemybossmove();
+				enemybossshot();
+				//enemymoveRL();
+				//enemy
+				for (int i = 10; i < 14; i++) {
+					if (chk_3[i] == 0) {
+						if (i <12) {
+							enemy[i].set(((140 * (i % 5)) + 190), -90);
+							chk_3[i] = 1;
+							break;
+						}
+						if (i >11) {
+							enemy[i].set(((140 * (i % 5)) + 310), -90);
+							chk_3[i] = 1;
+							break;
+						}
+					}
+				}
+
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				//enemyBullet 
+				if (dif3 > 3) {
+					for (int i = 10; i < 14; i++) {
+						if (chk_4[i] == 0 && enemy[i].enemy.getPosition().y == 100) {
+							enemybullet[i].set(enemy[i].enemy.getPosition().x + 23, enemy[i].enemy.getPosition().y + 58);
+							chk_4[i] = 1;
+						}
+						start1 = clock();
+					}dif3 = 0;
+				}
+				//enemyboss
+				for (int i = 0; i < 1; i++) {
+					if (chk_5[i] == 0) {
+						enemyboss[i].set(430, -200);
+						chk_5[i] = 1;
+						//break;
+					}
+				}
+				//enemybossbullet
+				end2 = clock();
+				float dif4 = (float)(end2 - start2) / CLOCKS_PER_SEC;
+				if (dif4 > 3) {
+					for (int i = 0; i < 3; i++) {
+						if (chk_6[i] == 0 && enemyboss[0].enemyboss.getPosition().y == 30) {
+							if (i == 0) {
+								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 21, enemyboss[i].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+							if (i == 1) {
+								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 53.5, enemyboss[i].enemyboss.getPosition().y + 165);
+								chk_6[i] = 1;
+							}
+							if (i == 2) {
+								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 85, enemyboss[i].enemyboss.getPosition().y + 100);
+								chk_6[i] = 1;
+							}
+						}
+						start2 = clock();
+					}dif4 = 0;
+				}
+			}
+			
 			
 			//BG move
 			parallaxShader.setUniform("offset", offset -= clock1.restart().asSeconds() / 50);
@@ -395,35 +477,47 @@ strgame:
 				}
 			}
 
-			//monster
-			/*for (int i = 0; i < 6; i++) {
-				if (chk_2[i] == 1) {
-					window.draw(monster[i].monster);
-				}
-			}*/
 
 			//enemy
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < 19; i++) {
 				if (chk_3[i] == 1) {
 					window.draw(enemy[i].enemy);
 				}
 			}
 
 			//enemyboss
-			if (chk_5 == 1) {
-				window.draw(enemyboss.enemyboss);
+			for (int i = 0; i < 6; i++) {
+				if (chk_5[i] == 1) {
+					window.draw(enemyboss[i].enemyboss);
+				}
 			}
 
 			//enemybullet
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < 19; i++) {
 				if (chk_4[i] == 1) {
 					window.draw(enemybullet[i].enemybullet);
+				}
+			}
+
+			//enemybossbullet
+			for (int i = 0; i < 18; i++) {
+				if (chk_6[i] == 1) {
+					window.draw(enemybossbullet[i].enemybossbullet);
 				}
 			}
 
 			//score
 			scoreText.setString(std::to_string(scoreCount));
 			window.draw(scoreText);
+
+			//wave
+			waveText.setString(std::to_string(wave));
+			window.draw(waveText);
+
+			//testposition
+			position.setString(std::to_string(z));
+			window.draw(position);
+
 
 			window.display();
 		}
@@ -492,25 +586,26 @@ void shot()
 	}
 }
 
-void erase()
-{
-	for (int i = 0; i < 6; i++) {
-		if (chk_2[i] == 1) {
-			monster[i].monster.move(0, 2.2);
-		}
-		if (monster[i].monster.getPosition().y > 800) {
-			chk_2[i] = 0;
-		}
-	}
-}
 
-void enemymove()
+void enemymovewave1()
 {
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 19; i++) {
 		if (enemy[i].enemy.getPosition().y < 80 && chk_3[i] == 1 && enemymove1 == true) {
 			enemy[i].enemy.move(0, 2.5);
 		}
 		if (enemy[5].enemy.getPosition().y == 80 ) {
+			enemymove1 = false;
+		}
+	}
+}
+
+void enemymovewave2()
+{
+	for (int i = 0; i < 19; i++) {
+		if (enemy[i].enemy.getPosition().y < 80 && chk_3[i] == 1 && enemymove1 == true) {
+			enemy[i].enemy.move(0, 2.5);
+		}
+		if (enemy[10].enemy.getPosition().y == 80) {
 			enemymove1 = false;
 		}
 		if (enemy[i].enemy.getPosition().y == 80) {
@@ -519,16 +614,33 @@ void enemymove()
 	}
 }
 
-void enemybossmove()
+void enemymovewave3()
 {
-	if (bossmove == true && enemyboss.enemyboss.getPosition().y < 30 && chk_5 == 1) {
-		enemyboss.enemyboss.move(0, 2.5);
+	for (int i = 0; i < 19; i++) {
+		if (enemy[i].enemy.getPosition().y < 100 && chk_3[i] == 1 && enemymove1 == true) {
+			enemy[i].enemy.move(0, 2.5);
+		}
+		if (enemy[14].enemy.getPosition().y == 100) {
+			enemymove1 = false;
+		}
+		if (enemy[i].enemy.getPosition().y == 100) {
+			enemymove2[i] = true;
+		}
 	}
 }
 
-void enemyshot()
+void enemybossmove()
 {
 	for (int i = 0; i < 6; i++) {
+		if (enemyboss[i].enemyboss.getPosition().y < 30 && chk_5[i] == 1) {
+			enemyboss[i].enemyboss.move(0, 2.5);
+		}
+	}
+}
+
+void enemyshotwave12()
+{
+	for (int i = 0; i < 19; i++) {
 		if (chk_4[i] == 1 && enemy[i].enemy.getPosition().y == 80) {
 			enemybullet[i].enemybullet.move(0, 5);
 		}
@@ -539,34 +651,59 @@ void enemyshot()
 	}
 }
 
+void enemyshotwave345()
+{
+	for (int i = 0; i < 19; i++) {
+		if (chk_4[i] == 1 && enemy[i].enemy.getPosition().y == 100) {
+			enemybullet[i].enemybullet.move(0, 5);
+		}
+		if (enemybullet[i].enemybullet.getPosition().y > 800) {
+			chk_4[i] = 0;
+		}
+	}
+}
+
+void enemybossshot()
+{
+	for (int i = 0; i < 18; i++) {
+		if (chk_6[i] == 1 & enemyboss[0].enemyboss.getPosition().y == 30) {
+			enemybossbullet[i].enemybossbullet.move(0, 5);
+		}
+		if (enemybossbullet[i].enemybossbullet.getPosition().y > 800) {
+			chk_6[i] = 0;
+		}
+	}
+}
+
 void check()
 {
-	if (enemyCount == 6) {
+	if (enemyCount == 5) {
 		//enemymove1 = true;
-		//enemyCount = 0;
-		bossmove = true;
+		enemyCount = 0;
+		wave += 1;
+		//bossmove = true;
 	}
 }
 
 void enemymoveRL()
 {
-	for (int i = 0; i < 6; i++) {
+	for (int i = 5; i < 19; i++) {
 		if (enemymove2[i] == true) {
 			if (right == true) {
-				if (enemy[i].enemy.getPosition().x < ((115 * i) + 250)) {
+				if (enemy[i].enemy.getPosition().x < ((140 * (i%5)) + 250)) {
 					enemy[i].enemy.move(1, 0);
 
 				}
-				if (enemy[i].enemy.getPosition().x == ((115 * i) + 250)) {
+				if (enemy[i].enemy.getPosition().x == ((140 * (i % 5)) + 250)) {
 					right = false;
 					left = true;
 				}
 			}
 			if (left == true) {
-				if (enemy[i].enemy.getPosition().x > ((115 * i) + 100)) {
+				if (enemy[i].enemy.getPosition().x > ((140 * (i % 5)) + 100)) {
 					enemy[i].enemy.move(-1, 0);
 				}
-				if (enemy[i].enemy.getPosition().x == ((115 * i) + 100)) {
+				if (enemy[i].enemy.getPosition().x == ((140 * (i % 5)) + 100)) {
 					left = false;
 					right = true;
 				}
@@ -574,3 +711,4 @@ void enemymoveRL()
 		}
 	}
 }
+
