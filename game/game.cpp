@@ -10,6 +10,7 @@
 #include <SFML/OpenGL.hpp>
 #include "Menu.h"
 #include <time.h>
+#include <fstream>
 
 using namespace sf;
 
@@ -41,6 +42,10 @@ int wave = 1;
 int waveend = 0;
 int sd = 5;
 int HP = 3;
+int cnt;
+int score = 0;
+float debounce = 0;
+float deltatime = 0.0f;
 bool shieldcheckplayer = false;
 bool enemymove1 = true;
 bool enemymove2[19] = {};
@@ -71,6 +76,7 @@ Texture heal;
 Texture shield;
 Texture boot;
 Texture shield1;
+
 
 SoundBuffer soundbullet;
 SoundBuffer soundenemybomb;
@@ -269,6 +275,86 @@ int main()
 	Sprite backgroundmenu;
 	backgroundmenu.setTexture(texture);
 
+	//leaderboard
+	Texture leaderboardbackground;
+	leaderboardbackground.loadFromFile("img/backgroundleaderboard.png");
+	Sprite backgroundleaderborad;
+	backgroundleaderborad.setTexture(leaderboardbackground);
+
+	//leaderboard
+	Texture backgroundover;
+	backgroundover.loadFromFile("img/back.png");
+	Sprite back;
+	back.setTexture(backgroundover);
+
+	//clock
+	sf::Clock clock3,clock2;
+
+	
+
+
+	sf::Music music;
+	// Open it from an audio file
+	if (!music.openFromFile("sound/backgroundsound.ogg"))
+	{
+		// error...
+	}
+	// Change some parameters
+	music.setPosition(0, 1, 10); // change its 3D position
+	music.setPitch(2);           // increase the pitch
+	music.setVolume(50);         // reduce the volume
+	music.setLoop(true);         // make it loop
+	// Play it
+	music.play();
+
+	//font
+	Font font;
+	if (!font.loadFromFile("Pixeboy.ttf"))
+	{
+		return -1;
+	}
+
+	Text scoreboard;
+	scoreboard.setFont(font);
+	scoreboard.setString("SCOREBOARD");
+	scoreboard.setFillColor(sf::Color::White);
+	scoreboard.setCharacterSize(50);
+	scoreboard.setPosition(380, 110);
+
+	std::vector<std::pair<int, std::string>> ScoreBoard;
+
+
+	//name 
+	sf::Text name;
+	name.setFont(font);
+	name.setString("Name : ");
+	name.setFillColor(sf::Color::White);
+	name.setPosition(200, 300);
+	name.setCharacterSize(80);
+	sf::String nameplayer;
+
+	//high score
+	Text hname, hscore, HighScoreText;
+	HighScoreText.setFont(font);
+	HighScoreText.setFillColor(sf::Color::White);
+	HighScoreText.setCharacterSize(50);
+	HighScoreText.setPosition(300, 300);
+
+	hscore.setFont(font);
+	hscore.setCharacterSize(40);
+	hscore.setFillColor(sf::Color::White);
+	hname.setFont(font);
+	hname.setCharacterSize(40);
+	hname.setFillColor(sf::Color::White);
+
+	//gameover
+	sf::Text gameover;
+	gameover.setFont(font);
+	gameover.setString("GAME OVER");
+	gameover.setFillColor(sf::Color::White);
+	gameover.setPosition(200, 200);
+	gameover.setCharacterSize(160);
+
 strgame:
 	if (startgame == 1) {
 		srand(time(NULL));
@@ -285,12 +371,7 @@ strgame:
 
 		int HP = 3;
 
-		//font
-		Font font;
-		if (!font.loadFromFile("Pixeboy.ttf"))
-		{
-			return -1;
-		}
+		
 
 		//score
 		int scoreCount = 0;
@@ -374,6 +455,7 @@ strgame:
 				if (event.type == Event::Closed)
 					window.close();
 			}
+			
 			float x, y, z;
 			x = player.shape.getPosition().x;
 			y = player.shape.getPosition().y;
@@ -415,6 +497,7 @@ strgame:
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
 						chk_4[k] = 0;
 						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-800, -800));
+						score -= 100;
 					}
 				}
 			}
@@ -427,9 +510,11 @@ strgame:
 						if (hpbulletboss[k] == 1) {
 							chk_6[k] = 0;
 							enemybossbullet[k].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+							score -= 100;
 						}
 						if (hpbulletboss[k] == 2) {
 							hpbulletboss[k] -= 1;
+							score -= 100;
 						}
 					}
 				}
@@ -443,12 +528,13 @@ strgame:
 					if (shieldcheckplayer == true) {
 						shieldcheckplayer = false;
 					}
-					else
+					else {
 						HP--;
+						score -= 300;
+					}
 				}
 			}
 
-			
 			//collision player&enemybossbullet
 			for (int k = 0; k < 18; k++) {
 				if (player.shape.getGlobalBounds().intersects(enemybossbullet[k].enemybossbullet.getGlobalBounds())) {
@@ -457,12 +543,12 @@ strgame:
 					if (shieldcheckplayer == true) {
 						shieldcheckplayer = false;
 					}
-					else
-					  HP--;
-
+					else {
+						HP--;
+						score -= 500;
+					}
 				}
 			}
-			
 
 			//collision bullet&enemy
 			for (int i = 0; i < 6; i++) {
@@ -478,6 +564,7 @@ strgame:
 							//chk_3[k] = 0;
 							chk_4[k] = 0;
 							enemyCount++;
+							score += 1000;
 						}
 
 						if (hpenemy[k] == 2) {
@@ -516,7 +603,9 @@ strgame:
 							chk_6[1] = 0;
 							chk_6[2] = 0;
 							enemyCount++;
+							score += 3000;
 							hpboss[0] = 0;
+							
 						}
 						if (hpboss[1] == 1) {
 							enemyboss[1].enemyboss.setPosition(Vector2f(-8000, -800));
@@ -527,6 +616,7 @@ strgame:
 							chk_6[3] = 0;
 							chk_6[4] = 0;
 							chk_6[5] = 0;
+							score += 3000;
 							hpboss[1] = 0;
 						}
 						if (hpboss[2] == 1) {
@@ -538,6 +628,7 @@ strgame:
 							chk_6[6] = 0;
 							chk_6[7] = 0;
 							chk_6[8] = 0;
+							score += 3000;
 							hpboss[2] = 0;
 						}
 						if (hpboss[3] == 1) {
@@ -549,6 +640,7 @@ strgame:
 							chk_6[9] = 0;
 							chk_6[10] = 0;
 							chk_6[11] = 0;
+							score += 3000;
 							hpboss[3] = 0;
 						}
 						if (hpboss[0] > 1) {
@@ -997,8 +1089,40 @@ strgame:
 				}
 			}
 
+			if (HP == 0 || HP < 0) {
+				//write files
+				std::string name;
+				name = nameplayer;
+				std::ofstream highscore;
+				highscore.open("score/Score.txt", std::ios::out | std::ios::app);
+				highscore << "\n" << name << " " << score;
+				highscore.close();
+
+				//read files
+				ScoreBoard.clear();
+
+				std::ifstream loadFile;
+				loadFile.open("score/Score.txt");
+				while (!loadFile.eof()) {
+					std::string tempName;
+					int tempScore;
+					loadFile >> tempName >> tempScore;
+					std::cout << tempName << " " << tempScore << std::endl;
+					ScoreBoard.push_back({ tempScore,tempName });
+				}
+				loadFile.close();
+
+				std::sort(ScoreBoard.begin(), ScoreBoard.end(), std::greater<std::pair< int, std::string>>());
+				std::cout << ScoreBoard.data();
+				std::vector<std::pair<int, std::string >>::iterator k = ScoreBoard.begin();
+				HighScoreText.setString("HIGH SCORE : " + std::to_string(k->first));
+				startgame = 4;
+				goto gameover;
+				window.close();
+			}
+
 			//score
-			scoreText.setString(std::to_string(scoreCount));
+			scoreText.setString(std::to_string(score));
 			window.draw(scoreText);
 
 			//wave
@@ -1014,7 +1138,153 @@ strgame:
 		}
 		return 0;
 	}
-	else {
+strgame1:
+	if (startgame == 2) {
+			sf::RenderWindow window(sf::VideoMode(1000, 800), "LEDERBOARD", sf::Style::Close | sf::Style::Resize);
+			while (window.isOpen())
+			{
+				sf::Event event;
+				while (window.pollEvent(event))
+				{
+					switch (event.type)
+					{
+
+					case sf::Event::Closed:
+						window.close();
+						break;
+					}
+				}
+				ScoreBoard.clear();
+				
+				std::ifstream loadFile;
+				loadFile.open("score/Score.txt");
+				while (!loadFile.eof())
+				{
+					std::string tempName;
+					int tempScore;
+					loadFile >> tempName >> tempScore;
+					ScoreBoard.push_back({ tempScore,tempName });
+				}
+				loadFile.close();
+				
+				sort(ScoreBoard.begin(), ScoreBoard.end(), std::greater<std::pair< int, std::string>>());
+
+				window.draw(backgroundleaderborad);
+
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+				{
+					window.close();
+				}
+
+				
+				cnt = 0;
+				for (std::vector<std::pair<int, std::string>>::iterator k = ScoreBoard.begin(); k != ScoreBoard.end(); ++k)
+				{
+					++cnt;
+					if (cnt > 5)
+						break;
+					std::cout << cnt << std::endl;
+					
+					hscore.setPosition(300, 250 + (50 * cnt));
+					hname.setPosition(600, 250 + (50 * cnt));
+					hscore.setString(std::to_string(k->first));
+					hname.setString(k->second);
+					window.draw(hscore);
+					window.draw(hname);
+					
+				}
+				
+				window.draw(scoreboard);
+				window.display();
+
+			}
+		}
+strgame2: //name
+	if (startgame == 3) {
+		sf::RenderWindow window(sf::VideoMode(1000, 800), "NAME", sf::Style::Close | sf::Style::Resize);
+		while (window.isOpen())
+		{
+
+			deltatime = clock3.restart().asSeconds();
+
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				switch (event.type)
+				{
+
+				case sf::Event::Closed:
+					window.close();
+					break;
+				}
+			}
+			window.draw(backgroundleaderborad);
+
+			if (event.type == sf::Event::TextEntered and debounce < clock2.getElapsedTime().asSeconds())
+			{
+
+				debounce = clock2.getElapsedTime().asSeconds() + 0.2;
+				if (event.text.unicode >= 33 && event.text.unicode <= 126 && nameplayer.getSize() <= 13 && event.text.unicode != 44)
+				{
+					nameplayer += event.text.unicode;
+				}
+				else if (event.text.unicode == 8)//backspace
+				{
+					nameplayer = nameplayer.substring(0, nameplayer.getSize() - 1);
+				}
+				else if (event.text.unicode == 13 && nameplayer.getSize() > 0)//enter
+				{
+					startgame = 1;
+					printf("play");
+					window.close();
+					goto strgame;
+					break;
+				}
+			}
+
+
+			name.setString("Name : " + nameplayer);
+
+			window.draw(name);
+			window.display();
+		}
+	}
+gameover:
+	if (startgame == 4) {
+		sf::RenderWindow window(sf::VideoMode(1000, 800), "NAME", sf::Style::Close | sf::Style::Resize);
+		while (window.isOpen())
+		{
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				switch (event.type)
+				{
+				case sf::Event::KeyReleased:
+					switch (event.key.code)
+					{
+					case sf::Keyboard::Enter:
+						startgame = 0;
+						window.close();
+						goto menu;
+						break;
+					}
+					break;
+				}
+			}
+
+			window.draw(back);
+			window.draw(gameover);
+			//Window.draw(window);
+
+			window.display();
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			{
+				window.close();
+			}
+		}
+	}
+menu:
+	if(startgame==0) {
 
 		while (window.isOpen())
 		{
@@ -1036,13 +1306,15 @@ strgame:
 						switch (menu.GetPressedItem())
 						{
 						case 0:
-							startgame = 1;
-							//printf("play");
+							startgame = 3;
 							window.close();
-							goto strgame;
+							goto strgame2;
 							break;
 						case 1:
-							printf("leaderboard");
+							startgame = 2;
+							window.clear();
+							window.close();
+							goto strgame1;
 							break;
 						case 2:
 							window.close();
