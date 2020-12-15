@@ -333,6 +333,21 @@ int main()
 	name.setCharacterSize(80);
 	sf::String nameplayer;
 
+	//nameover 
+	sf::Text nameover;
+	nameover.setFont(font);
+	nameover.setFillColor(sf::Color::White);
+	nameover.setPosition(350, 370);
+	nameover.setCharacterSize(70);
+
+	//scoreover
+	sf::Text scoreover;
+	scoreover.setFont(font);
+	scoreover.setString("Score : ");
+	scoreover.setFillColor(sf::Color::White);
+	scoreover.setPosition(350, 470);
+	scoreover.setCharacterSize(60);
+
 	//high score
 	Text hname, hscore, HighScoreText;
 	HighScoreText.setFont(font);
@@ -352,7 +367,7 @@ int main()
 	gameover.setFont(font);
 	gameover.setString("GAME OVER");
 	gameover.setFillColor(sf::Color::White);
-	gameover.setPosition(200, 200);
+	gameover.setPosition(200, 170);
 	gameover.setCharacterSize(160);
 
 strgame:
@@ -1116,6 +1131,7 @@ strgame:
 				std::cout << ScoreBoard.data();
 				std::vector<std::pair<int, std::string >>::iterator k = ScoreBoard.begin();
 				HighScoreText.setString("HIGH SCORE : " + std::to_string(k->first));
+				
 				startgame = 4;
 				goto gameover;
 				window.close();
@@ -1133,12 +1149,11 @@ strgame:
 			position.setString(std::to_string(HP));
 			window.draw(position);
 
-
 			window.display();
 		}
 		return 0;
 	}
-strgame1:
+strgame1: //leaderboard
 	if (startgame == 2) {
 			sf::RenderWindow window(sf::VideoMode(1000, 800), "LEDERBOARD", sf::Style::Close | sf::Style::Resize);
 			while (window.isOpen())
@@ -1148,9 +1163,15 @@ strgame1:
 				{
 					switch (event.type)
 					{
-
-					case sf::Event::Closed:
-						window.close();
+					case sf::Event::KeyReleased:
+						switch (event.key.code)
+						{
+						case sf::Keyboard::Enter:
+							startgame = 0;
+							window.close();
+							goto menu;
+							break;
+						}
 						break;
 					}
 				}
@@ -1242,7 +1263,7 @@ strgame2: //name
 				}
 			}
 
-
+			nameover.setString("Name : " + nameplayer);
 			name.setString("Name : " + nameplayer);
 
 			window.draw(name);
@@ -1271,12 +1292,14 @@ gameover:
 					break;
 				}
 			}
-
+			scoreover.setString("Score : " + score);
 			window.draw(back);
 			window.draw(gameover);
-			//Window.draw(window);
-
+			window.draw(nameover);
+			//window.draw(scoreover);
 			window.display();
+
+			
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 			{
 				window.close();
@@ -1285,7 +1308,7 @@ gameover:
 	}
 menu:
 	if(startgame==0) {
-
+		RenderWindow window(sf::VideoMode(1000, 800), "Game");
 		while (window.isOpen())
 		{
 			sf::Event event;
