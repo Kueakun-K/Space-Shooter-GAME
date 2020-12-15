@@ -23,27 +23,50 @@ void check();
 void enemymoveRL();
 void enemybossmove();
 void enemybossshot();
+void enemybossshotwave4();
+void enemybossmoveRL();
+void enemybossmoveRLwave4();
+void itemmove();
 int chk_1[6] = { 0 };  //bullet
 int chk_3[19] ={ 0 };  //enemy
 int chk_4[19] ={ 0 };  //enemyBullet
 int chk_5[6] = { 0 };  //enemyboss
 int chk_6[18] ={ 0 };  //enemybossBullet
+int hpboss[4] = { 10,10,10,10 };
 int enemyCount = 0;
-int wave = 3;
+int wave = 1;
+int waveend = 0;
+int sd = 5;
+int HP = 3;
+bool shieldcheckplayer = true;
 bool enemymove1 = true;
 bool enemymove2[19] = {};
+bool bossmove = false;
 bool right = true;
 bool left = false;
-bool bossmove = false;
+bool bossright = true;
+bool bossleft = false;
+bool itemcheck = false;
+bool healcheck = false;
+bool shieldcheck = false;
+bool speedcheck = false;
 
 int startgame = 0;
 clock_t start = -0.5, end = 0;
 clock_t start1 = -0.5, end1 = 0;
 clock_t start2 = -0.5, end2 = 0;
+clock_t start3 = -0.5, end3 = 0;
 
 Texture BULLET;
 Texture enemyTexture;
+Texture bulletenemy;
 Texture enemybossTexture;
+Texture bulletenemyboss;
+Texture heal;
+Texture shield;
+Texture boot;
+Texture shield1;
+
 
 class Player
 	{
@@ -60,15 +83,14 @@ public:
 		~Player() {}
 	};
 
-
 class Bullet {
 public:
 	sf::Sprite bullet;
 	void set(int x, int y)
 	{
-		//BULLET.loadFromFile("img/bullet.png");
+		BULLET.loadFromFile("img/bullet.png");
 		bullet.setTexture(BULLET);
-		bullet.setTextureRect(sf::IntRect(0, 0, 20, 20));
+		bullet.setTextureRect(sf::IntRect(0, 0, 20, 25));
 		bullet.setPosition(x, y);
 	}
 };
@@ -106,9 +128,9 @@ public:
 	sf::Sprite enemybullet;
 	void set(int x, int y)
 	{
-		//BULLET.loadFromFile("img/bullet.png");
-		enemybullet.setTexture(BULLET);
-		enemybullet.setTextureRect(sf::IntRect(0, 0, 20, 20));
+		bulletenemy.loadFromFile("img/bulletenemy.png");
+		enemybullet.setTexture(bulletenemy);
+		enemybullet.setTextureRect(sf::IntRect(0, 0, 20, 25));
 		enemybullet.setPosition(x, y);
 	}
 };
@@ -118,18 +140,70 @@ public:
 	sf::Sprite enemybossbullet;
 	void set(int x, int y)
 	{
-		//BULLET.loadFromFile("img/bullet.png");
-		enemybossbullet.setTexture(BULLET);
-		enemybossbullet.setTextureRect(sf::IntRect(0, 0, 20, 20));
+		bulletenemyboss.loadFromFile("img/bulletenemyboss.png");
+		enemybossbullet.setTexture(bulletenemyboss);
+		enemybossbullet.setTextureRect(sf::IntRect(0, 0, 20, 25));
 		enemybossbullet.setPosition(x, y);
+	}
+};
+
+class itemheal {
+public:
+	sf::Sprite itemheal;
+	void set(int x, int y)
+	{
+		heal.loadFromFile("img/heal.png");
+		itemheal.setTexture(heal);
+		itemheal.setTextureRect(sf::IntRect(0, 0, 40, 40));
+		itemheal.setPosition(x, y);
+	}
+};
+
+class itemshield {
+public:
+	sf::Sprite itemshield;
+	void set(int x, int y)
+	{
+		shield.loadFromFile("img/shield.png");
+		itemshield.setTexture(shield);
+		itemshield.setTextureRect(sf::IntRect(0, 0, 40, 40));
+		itemshield.setPosition(x, y);
+	}
+};
+
+class itemspeed {
+public:
+	sf::Sprite itemspeed;
+	void set(int x, int y)
+	{
+		boot.loadFromFile("img/boot.png");
+		itemspeed.setTexture(boot);
+		itemspeed.setTextureRect(sf::IntRect(0, 0, 40, 40));
+		itemspeed.setPosition(x, y);
+	}
+};
+
+class shieldplayer {
+public:
+	sf::Sprite shieldplayer;
+	void set(int x, int y)
+	{
+		shield1.loadFromFile("img/shieldplayer.png");
+		shieldplayer.setTexture(shield1);
+		shieldplayer.setTextureRect(sf::IntRect(0, 0, 90, 90));
+		shieldplayer.setPosition(x, y);
 	}
 };
 
 Enemy enemy[19];
 Bullet bullet[6];
 enemyBullet enemybullet[19];
-EnemyBoss enemyboss[6];
+EnemyBoss enemyboss[4];
 enemybossBullet enemybossbullet[18];
+itemheal healitem;
+itemshield shielditem;
+itemspeed speeditem;
+shieldplayer shield2;
 
 int main()
 {
@@ -137,7 +211,7 @@ int main()
 	Menu menu(window.getSize().x, window.getSize().y);
 
 	Texture texture;
-	if (!texture.loadFromFile("img/spacee.png")) {
+	if (!texture.loadFromFile("img/background.png")) {
 	}
 	Sprite backgroundmenu;
 	backgroundmenu.setTexture(texture);
@@ -156,7 +230,7 @@ strgame:
 	Vector2u TextureSize;
 	Vector2u WindowSize;
 
-	int HP = 3;
+	
 
 	//font
 	Font font;
@@ -249,38 +323,43 @@ strgame:
 			float x, y,z;
 			x = player.shape.getPosition().x;
 			y = player.shape.getPosition().y;
-			z = enemyboss[0].enemyboss.getPosition().y;
+			z = enemyboss[0].enemyboss.getPosition().x;
 			
 			end = clock();
 			float dif1 = (float)(end - start) / CLOCKS_PER_SEC;
-
-			//player control
+			
 			if (Keyboard::isKeyPressed(Keyboard::W))
-				player.shape.move(0.f, -8.f);
+				player.shape.move(0, -sd);
 			if (Keyboard::isKeyPressed(Keyboard::A))
-				player.shape.move(-8.f, 0.f);
+				player.shape.move(-sd, 0);
 			if (Keyboard::isKeyPressed(Keyboard::S))
-				player.shape.move(0.f, 8.f);
+				player.shape.move(0, sd);
 			if (Keyboard::isKeyPressed(Keyboard::D))
-				player.shape.move(8.f, 0.f);
-			if (Keyboard::isKeyPressed(Keyboard::Space) && dif1 > 0.5)
+				player.shape.move(sd, 0);
+			if (Keyboard::isKeyPressed(Keyboard::Space) && dif1 > 0.5) {
 				for (int i = 0; i < 6; i++) {
 					if (chk_1[i] == 0) {
 						bullet[i].set(x + 20, y - 15);
 						chk_1[i] = 1;
 						start = clock();
+						dif1 = 0;
 						break;
 					}
 				}
-
+			}
+			
+			if (shieldcheckplayer == true) {
+				shield2.set(player.shape.getPosition().x-12, player.shape.getPosition().y-10);
+			}
 			
 			//collision bullet&enemybullet
 			for (int i = 0; i < 6; i++) {
 				for (int k = 0; k < 19; k++) {
 					if (bullet[i].bullet.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
-						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
 						chk_4[k] = 0;
+						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-800, -800));
+						
 					}
 				}
 			}
@@ -288,19 +367,37 @@ strgame:
 			//collision player&enemybullet
 			for (int k = 0; k < 19; k++) {
 				if (player.shape.getGlobalBounds().intersects(enemybullet[k].enemybullet.getGlobalBounds())) {
-					enemybullet[k].enemybullet.setPosition(sf::Vector2f(-80, 150));
+					enemybullet[k].enemybullet.setPosition(sf::Vector2f(-800, -800));
 					chk_4[k] = 0;
-					//HP--;
+					if (shieldcheckplayer == true) {
+						shieldcheckplayer = false;
+					}
+					else
+						HP--;
 				}
 			}
-
-
+			/*
+			//collision player&enemybossbullet
+			for (int k = 0; k < 19; k++) {
+				if (player.shape.getGlobalBounds().intersects(enemybossbullet[k].enemybossbullet.getGlobalBounds())) {
+					enemybossbullet[k].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+					chk_6[k] = 0;
+					if (shieldcheckplayer == true) {
+						shieldcheckplayer = false;
+					}
+					else
+					  HP--;
+					break;
+				}
+			}
+			*/
 			//collision bullet&enemy
 			for (int i = 0; i < 6; i++) {
 				for (int k = 0; k < 19; k++) {
 					if (enemy[k].enemy.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds())) {
 						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
 						enemy[k].enemy.setPosition(sf::Vector2f(-800, 150));
+						enemybullet[k].enemybullet.setPosition(sf::Vector2f(-800, -800));
 						scoreCount++;
 						enemymove2[k] == false;
 						//chk_3[k] = 0;
@@ -310,10 +407,32 @@ strgame:
 				}
 			}
 
+			//collision bullet&enemyboss
+			for (int i = 0; i < 6; i++) {
+				for (int k = 0; k < 6; k++) {
+					if (enemyboss[k].enemyboss.getGlobalBounds().intersects(bullet[i].bullet.getGlobalBounds()) && scoreCount ==14) {
+						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
+						hpboss[k]--;
+					}
+				}
+			}
+
+			//collision bullet&enemybossbullet
+			for (int i = 0; i < 6; i++) {
+				for (int k = 0; k < 19; k++) {
+					if (bullet[i].bullet.getGlobalBounds().intersects(enemybossbullet[k].enemybossbullet.getGlobalBounds())) {
+						bullet[i].bullet.setPosition(sf::Vector2f(-40, -40));
+						enemybossbullet[k].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+						chk_6[k] = 0;
+					}
+				}
+			}
+
 			//collision player&enemy
 			for (int k = 0; k < 19; k++) {
 				if (player.shape.getGlobalBounds().intersects(enemy[k].enemy.getGlobalBounds())) {
 					enemy[k].enemy.setPosition(sf::Vector2f(-800, 150));
+					enemybullet[k].enemybullet.setPosition(sf::Vector2f(-800, -800));
 					//chk_3[k] = 0;
 					chk_4[k] = 0;
 					scoreCount++;
@@ -321,6 +440,44 @@ strgame:
 					//HP--;
 				}
 			}
+
+			//collision player&item
+			if (player.shape.getGlobalBounds().intersects(healitem.itemheal.getGlobalBounds())) {
+				healitem.itemheal.setPosition(-800, -800);
+				HP += 1;
+				healcheck = false;
+				wave += 1;
+			}
+			if (player.shape.getGlobalBounds().intersects(shielditem.itemshield.getGlobalBounds())) {
+				shielditem.itemshield.setPosition(-800, -800);
+				shieldcheckplayer = true;
+				shieldcheck = false;
+				wave += 1;
+			}
+			if (player.shape.getGlobalBounds().intersects(speeditem.itemspeed.getGlobalBounds())) {
+				speeditem.itemspeed.setPosition(-800, -800);
+				sd += 3;
+				speedcheck = false;
+				wave += 1;
+			}
+
+			//collision item&window
+			if (healitem.itemheal.getPosition().y > 800) {
+				healitem.itemheal.setPosition(-800, -800);
+				healcheck = false;
+				wave += 1;
+			}
+			if (shielditem.itemshield.getPosition().y > 800) {
+				shielditem.itemshield.setPosition(-800, -800);
+				shieldcheck = false;
+				wave += 1;
+			}
+			if (speeditem.itemspeed.getPosition().y > 800) {
+				speeditem.itemspeed.setPosition(-800, -800);
+				speedcheck = false;
+				wave += 1;
+			}
+
 
 			//Collision with window
 			if (player.shape.getPosition().x <= 0) //Left
@@ -341,7 +498,7 @@ strgame:
 					if (chk_3[i] == 0) {
 						enemy[i].set(((140 * i) + 170), -90);
 						chk_3[i] = 1;
-						break;
+						//break;
 					}
 				}
 
@@ -356,6 +513,31 @@ strgame:
 						}
 						start1 = clock();
 					}dif3 = 0;
+				}
+			}
+
+			if (waveend == 1) {
+				itemmove();
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				if (dif3 > 2) {
+					if (itemcheck == true) {
+						x = rand() % 3;
+						if (x == 0) {
+							healitem.set(480, -200);
+							healcheck = true;
+						}
+						if (x == 1) {
+							shielditem.set(480, -200);
+							shieldcheck = true;
+						}
+						if (x == 2) {
+							speeditem.set(480, -200);
+							speedcheck = true;
+						}
+						start1 = clock();
+					}
+					itemcheck = false;
 				}
 			}
 
@@ -386,11 +568,37 @@ strgame:
 				}
 			}
 
+			if (waveend == 2) {
+				itemmove();
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				if (dif3 > 2) {
+					if (itemcheck == true) {
+						x = rand() % 3;
+						if (x == 0) {
+							healitem.set(480, -200);
+							healcheck = true;
+						}
+						if (x == 1) {
+							shielditem.set(480, -200);
+							shieldcheck = true;
+						}
+						if (x == 2) {
+							speeditem.set(480, -200);
+							speedcheck = true;
+						}
+						start1 = clock();
+					}
+					itemcheck = false;
+				}
+			}
+
 			if (wave == 3) {
 				enemymovewave3();
 				enemyshotwave345();
 				enemybossmove();
 				enemybossshot();
+				enemybossmoveRL();
 				//enemymoveRL();
 				//enemy
 				for (int i = 10; i < 14; i++) {
@@ -438,10 +646,7 @@ strgame:
 								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 21, enemyboss[i].enemyboss.getPosition().y + 70);
 								chk_6[i] = 1;
 							}
-							if (i == 1) {
-								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 53.5, enemyboss[i].enemyboss.getPosition().y + 165);
-								chk_6[i] = 1;
-							}
+							
 							if (i == 2) {
 								enemybossbullet[i].set(enemyboss[0].enemyboss.getPosition().x + 85, enemyboss[i].enemyboss.getPosition().y + 100);
 								chk_6[i] = 1;
@@ -449,6 +654,118 @@ strgame:
 						}
 						start2 = clock();
 					}dif4 = 0;
+				}
+
+				//enemybossbullet2
+				end3 = clock();
+				float dif5 = (float)(end3 - start3) / CLOCKS_PER_SEC;
+				if (dif5 > 2) {
+					if (chk_6[1] == 0 && enemyboss[0].enemyboss.getPosition().y == 30) {
+						enemybossbullet[1].set(enemyboss[0].enemyboss.getPosition().x + 53.5, enemyboss[0].enemyboss.getPosition().y + 135);
+						chk_6[1] = 1;
+					start3 = clock();
+					}dif5 = 0;
+				}
+			}
+
+			if (waveend == 3) {
+				itemmove();
+				end1 = clock();
+				float dif3 = (float)(end1 - start1) / CLOCKS_PER_SEC;
+				if (dif3 > 2) {
+					if (itemcheck == true) {
+						x = rand() % 3;
+						if (x == 0) {
+							healitem.set(480, -200);
+							healcheck = true;
+						}
+						if (x == 1) {
+							shielditem.set(480, -200);
+							shieldcheck = true;
+						}
+						if (x == 2) {
+							speeditem.set(480, -200);
+							speedcheck = true;
+						}
+						start1 = clock();
+					}
+					itemcheck = false;
+				}
+			}
+
+			if (wave == 4) {
+				enemybossmove();
+				enemybossshotwave4();
+				enemybossmoveRLwave4();
+				//enemyboss
+				for (int i = 1; i < 4; i++) {
+					if (chk_5[i] == 0) {
+						enemyboss[i].set((250*i)-50, -200);
+						chk_5[i] = 1;
+						//break;
+					}
+				}
+				//enemybossbullet
+				end2 = clock();
+				float dif4 = (float)(end2 - start2) / CLOCKS_PER_SEC;
+				if (dif4 > 3) {
+					for (int i = 3; i < 12; i++) {
+						if (chk_6[i] == 0 && (enemyboss[3].enemyboss.getPosition().y == 30 || enemyboss[2].enemyboss.getPosition().y == 30 || enemyboss[1].enemyboss.getPosition().y == 30)) {
+							if (i == 3) {
+								enemybossbullet[i].set(enemyboss[1].enemyboss.getPosition().x + 21, enemyboss[1].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+
+							if (i == 5) {
+								enemybossbullet[i].set(enemyboss[1].enemyboss.getPosition().x + 85, enemyboss[1].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+							if (i == 6) {
+								enemybossbullet[i].set(enemyboss[2].enemyboss.getPosition().x + 21, enemyboss[2].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+
+							if (i == 8) {
+								enemybossbullet[i].set(enemyboss[2].enemyboss.getPosition().x + 85, enemyboss[2].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+							if (i == 9) {
+								enemybossbullet[i].set(enemyboss[3].enemyboss.getPosition().x + 21, enemyboss[3].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+
+							if (i == 11) {
+								enemybossbullet[i].set(enemyboss[3].enemyboss.getPosition().x + 85, enemyboss[3].enemyboss.getPosition().y + 70);
+								chk_6[i] = 1;
+							}
+						}
+						start2 = clock();
+					}dif4 = 0;
+				}
+				//enemybossbullet2
+				end3 = clock();
+				float dif5 = (float)(end3 - start3) / CLOCKS_PER_SEC;
+				if (dif5 > 2) {
+					for (int i = 3; i < 12; i++) {
+						if (chk_6[i] == 0 && (enemyboss[3].enemyboss.getPosition().y == 30 || enemyboss[2].enemyboss.getPosition().y == 30 || enemyboss[1].enemyboss.getPosition().y == 30)) {
+							if (i == 4) {
+								enemybossbullet[i].set(enemyboss[1].enemyboss.getPosition().x + 53.5, enemyboss[1].enemyboss.getPosition().y + 135);
+								chk_6[i] = 1;
+								start3 = clock();
+							}
+							if (i == 7) {
+								enemybossbullet[i].set(enemyboss[2].enemyboss.getPosition().x + 53.5, enemyboss[2].enemyboss.getPosition().y + 135);
+								chk_6[i] = 1;
+								start3 = clock();
+							}
+							if (i == 10) {
+								enemybossbullet[i].set(enemyboss[3].enemyboss.getPosition().x + 53.5, enemyboss[3].enemyboss.getPosition().y + 135);
+								chk_6[i] = 1;
+								start3 = clock();
+							}
+						}
+					}dif5 = 0;
+					
 				}
 			}
 			
@@ -458,9 +775,6 @@ strgame:
 
 			//Draw
 			window.clear();
-
-			//menu
-			//menu.Draw(window);
 
 			//background
 			window.draw(background, &parallaxShader);
@@ -476,7 +790,6 @@ strgame:
 					window.draw(bullet[i].bullet);
 				}
 			}
-
 
 			//enemy
 			for (int i = 0; i < 19; i++) {
@@ -506,6 +819,19 @@ strgame:
 				}
 			}
 
+			//item
+			if (healcheck == true)
+				window.draw(healitem.itemheal);
+			if (shieldcheck == true)
+				window.draw(shielditem.itemshield);
+			if (speedcheck == true)
+				window.draw(speeditem.itemspeed);
+
+			//shield
+			if (shieldcheckplayer == true) {
+				window.draw(shield2.shieldplayer);
+			}
+
 			//score
 			scoreText.setString(std::to_string(scoreCount));
 			window.draw(scoreText);
@@ -515,7 +841,7 @@ strgame:
 			window.draw(waveText);
 
 			//testposition
-			position.setString(std::to_string(z));
+			position.setString(std::to_string(HP));
 			window.draw(position);
 
 
@@ -666,7 +992,19 @@ void enemyshotwave345()
 void enemybossshot()
 {
 	for (int i = 0; i < 18; i++) {
-		if (chk_6[i] == 1 & enemyboss[0].enemyboss.getPosition().y == 30) {
+		if (chk_6[i] == 1 && enemyboss[0].enemyboss.getPosition().y == 30) {
+			enemybossbullet[i].enemybossbullet.move(0, 5);
+		}
+		if (enemybossbullet[i].enemybossbullet.getPosition().y > 800) {
+			chk_6[i] = 0;
+		}
+	}
+}
+
+void enemybossshotwave4()
+{
+	for (int i = 0; i < 18; i++) {
+		if (chk_6[i] == 1 && (enemyboss[3].enemyboss.getPosition().y == 30 || enemyboss[2].enemyboss.getPosition().y == 30 || enemyboss[1].enemyboss.getPosition().y == 30)) {
 			enemybossbullet[i].enemybossbullet.move(0, 5);
 		}
 		if (enemybossbullet[i].enemybossbullet.getPosition().y > 800) {
@@ -680,9 +1018,50 @@ void check()
 	if (enemyCount == 5) {
 		//enemymove1 = true;
 		enemyCount = 0;
-		wave += 1;
+		waveend +=1;
+		itemcheck = true;
 		//bossmove = true;
 	}
+	
+	if (hpboss[0] == 0) {
+			enemyboss[0].enemyboss.setPosition(Vector2f(-800, -800));
+			enemybossbullet[0].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[1].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[2].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			chk_6[0] = 0;
+			chk_6[1] = 0;
+			chk_6[2] = 0;
+		}
+	if (hpboss[1] == 0) {
+			enemyboss[1].enemyboss.setPosition(Vector2f(-800, -800));
+			enemybossbullet[3].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[4].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[5].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			chk_6[3] = 0;
+			chk_6[4] = 0;
+			chk_6[5] = 0;
+	}
+	if (hpboss[2] == 0) {
+			enemyboss[2].enemyboss.setPosition(Vector2f(-800, -800));
+			enemybossbullet[6].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[7].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[8].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			chk_6[6] = 0;
+			chk_6[7] = 0;
+			chk_6[8] = 0;
+	}
+	if (hpboss[3] == 0) {
+			enemyboss[3].enemyboss.setPosition(Vector2f(-800, -800));
+			enemybossbullet[9].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[10].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			enemybossbullet[11].enemybossbullet.setPosition(sf::Vector2f(-800, -800));
+			chk_6[9] = 0;
+			chk_6[10] = 0;
+			chk_6[11] = 0;
+	}
+
+	
+	
 }
 
 void enemymoveRL()
@@ -710,5 +1089,67 @@ void enemymoveRL()
 			}
 		}
 	}
+}
+
+void enemybossmoveRL()
+{
+		if (enemyCount == 4 && wave == 3) {
+			if (bossright == true) {
+				if (enemyboss[0].enemyboss.getPosition().x < 800) {
+					enemyboss[0].enemyboss.move(1, 0);
+
+				}
+				if (enemyboss[0].enemyboss.getPosition().x == 800) {
+					bossright = false;
+					bossleft = true;
+				}
+			}
+			if (bossleft == true) {
+				if (enemyboss[0].enemyboss.getPosition().x >200) {
+					enemyboss[0].enemyboss.move(-1, 0);
+				}
+				if (enemyboss[0].enemyboss.getPosition().x == 200) {
+					bossleft = false;
+					bossright = true;
+				}
+			}
+		}
+}
+
+void enemybossmoveRLwave4()
+{
+	if ( wave == 4 && (enemyboss[3].enemyboss.getPosition().y == 30 || enemyboss[2].enemyboss.getPosition().y == 30 || enemyboss[1].enemyboss.getPosition().y == 30 ) ) {
+		for (int i = 1; i < 4; i++) {
+			if (bossright == true) {
+				if (enemyboss[i].enemyboss.getPosition().x < (230 * i)  +100) {
+					enemyboss[i].enemyboss.move(1, 0);
+
+				}
+				if (enemyboss[i].enemyboss.getPosition().x == (230 * i) + 100) {
+					bossright = false;
+					bossleft = true;
+				}
+			}
+			if (bossleft == true) {
+				if (enemyboss[i].enemyboss.getPosition().x > (250 * i) - 200) {
+					enemyboss[i].enemyboss.move(-1, 0);
+				}
+				if (enemyboss[i].enemyboss.getPosition().x == (250 * i) - 200) {
+					bossleft = false;
+					bossright = true;
+				}
+			}
+		}
+	}
+}
+
+void itemmove()
+{
+	if (healcheck == true)
+		healitem.itemheal.move(0, 3);
+	if (shieldcheck == true)
+		shielditem.itemshield.move(0, 3);
+	if (speedcheck == true)
+		speeditem.itemspeed.move(0, 3);
 }
 
