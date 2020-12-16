@@ -266,8 +266,8 @@ enemybossbombsound soundenemybossbombplay;
 
 int main()
 {
-	RenderWindow window(sf::VideoMode(1000, 800), "MENU MODE", sf::Style::Close | sf::Style::Resize);
-	Menu menu(window.getSize().x, window.getSize().y);
+	//RenderWindow window(sf::VideoMode(1000, 800), "MENU MODE", sf::Style::Close | sf::Style::Resize);
+	//Menu menu(window.getSize().x, window.getSize().y);
 
 	Texture texture;
 	if (!texture.loadFromFile("img/background.png")) {
@@ -281,7 +281,7 @@ int main()
 	Sprite backgroundleaderborad;
 	backgroundleaderborad.setTexture(leaderboardbackground);
 
-	//leaderboard
+	//over
 	Texture backgroundover;
 	backgroundover.loadFromFile("img/back.png");
 	Sprite back;
@@ -290,7 +290,10 @@ int main()
 	//clock
 	sf::Clock clock3,clock2;
 
-	
+	Texture backgroundwin;
+	backgroundwin.loadFromFile("img/back.png");
+	Sprite win;
+	win.setTexture(backgroundwin);
 
 
 	sf::Music music;
@@ -340,14 +343,6 @@ int main()
 	nameover.setPosition(350, 370);
 	nameover.setCharacterSize(70);
 
-	//scoreover
-	sf::Text scoreover;
-	scoreover.setFont(font);
-	scoreover.setString("Score : ");
-	scoreover.setFillColor(sf::Color::White);
-	scoreover.setPosition(350, 470);
-	scoreover.setCharacterSize(60);
-
 	//high score
 	Text hname, hscore, HighScoreText;
 	HighScoreText.setFont(font);
@@ -369,6 +364,14 @@ int main()
 	gameover.setFillColor(sf::Color::White);
 	gameover.setPosition(200, 170);
 	gameover.setCharacterSize(160);
+
+	//gameover
+	sf::Text gamewin;
+	gamewin.setFont(font);
+	gamewin.setString("GAME WIN");
+	gamewin.setFillColor(sf::Color::White);
+	gamewin.setPosition(200, 170);
+	gamewin.setCharacterSize(160);
 
 strgame:
 	if (startgame == 1) {
@@ -647,7 +650,7 @@ strgame:
 							hpboss[2] = 0;
 						}
 						if (hpboss[3] == 1) {
-							enemyboss[3].enemyboss.setPosition(Vector2f(-800, -800));
+							enemyboss[3].enemyboss.setPosition(Vector2f(-8000, -800));
 							enemybossbullet[9].enemybossbullet.setPosition(sf::Vector2f(-8000, -800));
 							enemybossbullet[10].enemybossbullet.setPosition(sf::Vector2f(-8000, -800));
 							enemybossbullet[11].enemybossbullet.setPosition(sf::Vector2f(-8000, -800));
@@ -705,7 +708,11 @@ strgame:
 				wave += 1;
 			}
 
-
+			if (hpboss[1] <= 0 && hpboss[2] <= 0 && hpboss[3] <= 0) {
+				startgame = 5;
+				window.close();
+				goto gamewin;
+			}
 
 			//Collision with window
 			if (player.shape.getPosition().x <= 0) //Left
@@ -754,14 +761,14 @@ strgame:
 				if (dif3 > 2) {
 					if (itemcheck == true) {
 						x = rand() % 3;
-						if (x == 0) {
+						if (x == 0 || x==1) {
 							healitem.set(480, -200);
 							healcheck = true;
 						}
-						if (x == 1) {
-							shielditem.set(480, -200);
-							shieldcheck = true;
-						}
+						//if (x == 1) {
+						//	shielditem.set(480, -200);
+						//	shieldcheck = true;
+						//}
 						if (x == 2) {
 							speeditem.set(480, -200);
 							speedcheck = true;
@@ -922,14 +929,14 @@ strgame:
 				if (dif3 > 2) {
 					if (itemcheck == true) {
 						x = rand() % 3;
-						if (x == 0) {
+						if (x == 0 || x==1) {
 							healitem.set(480, -200);
 							healcheck = true;
 						}
-						if (x == 1) {
-							shielditem.set(480, -200);
-							shieldcheck = true;
-						}
+						//if (x == 1) {
+						//	shielditem.set(480, -200);
+						//	shieldcheck = true;
+						//}
 						if (x == 2) {
 							speeditem.set(480, -200);
 							speedcheck = true;
@@ -1085,7 +1092,7 @@ strgame:
 
 			//enemyboss
 			for (int i = 0; i < 6; i++) {
-				if (chk_5[i] == 1) {
+				if (chk_5[i] == 1 ) {
 					window.draw(enemyboss[i].enemyboss);
 				}
 			}
@@ -1103,7 +1110,10 @@ strgame:
 					window.draw(enemybossbullet[i].enemybossbullet);
 				}
 			}
-
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			{
+				window.close();
+			}
 			if (HP == 0 || HP < 0) {
 				//write files
 				std::string name;
@@ -1133,8 +1143,9 @@ strgame:
 				HighScoreText.setString("HIGH SCORE : " + std::to_string(k->first));
 				
 				startgame = 4;
-				goto gameover;
 				window.close();
+				goto gameover;
+				
 			}
 
 			//score
@@ -1142,11 +1153,11 @@ strgame:
 			window.draw(scoreText);
 
 			//wave
-			waveText.setString(std::to_string(wave));
+			waveText.setString(std::to_string(enemyCount));
 			window.draw(waveText);
 
 			//testposition
-			position.setString(std::to_string(HP));
+			position.setString(std::to_string( HP));
 			window.draw(position);
 
 			window.display();
@@ -1263,6 +1274,10 @@ strgame2: //name
 				}
 			}
 
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			{
+				window.close();
+			}
 			nameover.setString("Name : " + nameplayer);
 			name.setString("Name : " + nameplayer);
 
@@ -1284,19 +1299,19 @@ gameover:
 					switch (event.key.code)
 					{
 					case sf::Keyboard::Enter:
-						startgame = 0;
+			
 						window.close();
-						goto menu;
+						
 						break;
 					}
 					break;
 				}
 			}
-			scoreover.setString("Score : " + score);
+		
 			window.draw(back);
 			window.draw(gameover);
 			window.draw(nameover);
-			//window.draw(scoreover);
+		
 			window.display();
 
 			
@@ -1306,9 +1321,47 @@ gameover:
 			}
 		}
 	}
+gamewin:
+	if (startgame == 5) {
+		sf::RenderWindow window(sf::VideoMode(1000, 800), "NAME", sf::Style::Close | sf::Style::Resize);
+		while (window.isOpen())
+		{
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				switch (event.type)
+				{
+				case sf::Event::KeyReleased:
+					switch (event.key.code)
+					{
+					case sf::Keyboard::Enter:
+						
+
+						window.close();
+						
+						break;
+					}
+					break;
+				}
+			}
+
+			window.draw(win);
+			window.draw(gamewin);
+			window.draw(nameover);
+
+			window.display();
+
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			{
+				window.close();
+			}
+		}
+	}
 menu:
 	if(startgame==0) {
-		RenderWindow window(sf::VideoMode(1000, 800), "Game");
+		RenderWindow window(sf::VideoMode(1000, 800), "Game", Style::Close);
+		Menu menu(window.getSize().x, window.getSize().y);
 		while (window.isOpen())
 		{
 			sf::Event event;
@@ -1334,12 +1387,16 @@ menu:
 							goto strgame2;
 							break;
 						case 1:
+							printf("dd");
 							startgame = 2;
-							window.clear();
-							window.close();
+							//window.clear();
 							goto strgame1;
+							window.close();
+							
 							break;
 						case 2:
+							
+							
 							window.close();
 							break;
 						}
